@@ -1,14 +1,14 @@
 """
 rosegraphics.py - a simple Graphics library for Python.
+
 Its key feature is:
   -- USING this library provides a simple introduction to USING objects.
 
 Other key features include:
   -- It has a rich set of classes, methods and instance variables.
-       -- In addition to classes like Circles that are natural for
-            students, it has other kinds of classes like RoseWindow
-            and FortuneTeller to provide a richer set of examples
-            than "just" a graphics library.
+       In addition to classes like Circles that are natural for students,
+       it has other kinds of classes like RoseWindow and SimpleTurtle
+       to provide a richer set of examples than "just" a graphics library.
   -- It allows one to do a reasonable set of graphics operations
        with reasonable efficiency. The API mimics Java's Shape API
        for the most part.
@@ -16,12 +16,12 @@ Other key features include:
        (the standard graphics libraries that come with Python).
   -- Unlike tkinter, it is NOT event-driven and hence can be used
        before students see that paradigm.  (There is a behind-the-scenes
-       facilty for listening for and responding to events,
+       facility for listening for and responding to events,
        for those who want to do so.)
   -- It attempts to be as bullet-proof as possible, to make it easy
        for beginners to use it.  In particular, it attempts to provide
        reasonable error messages when a student misuses the API.
-  -- It was inspired by zellegraphics but is a complete re-implemenation
+  -- It was inspired by zellegraphics but is a complete re-implementation
        that attempts to:
        -- Be more bullet-proof.
        -- Provide a richer set of examples for using objects.
@@ -40,25 +40,6 @@ Authors: David Mutchler, Mark Hays, Michael Wollowswki, Matt Boutell,
          First completed version: September 2014.
 """
 
-# FIXME (errors):
-#  -- clone() does not really make a copy; it just makes a new one
-#     but without cloning all the attributes.
-#  -- _ShapeWithCenter claims that things like Ellipse are subclasses,
-#     but they are not at this point, I think.  In general, need to
-#     deal with overlap between _ShapeWithCenter and _RectangularShape.
-#     KEEP both of them to have some classes have corner_1 and corner_2
-#     while others have center and ...
-
-# FIXME (things that have yet to be implemented):
-#  -- Allow multiple canvasses.
-#  -- Better close_on ... ala zellegraphics.
-#  -- Keyboard.
-#  -- Better Mouse.
-#  -- Add type hints.
-#  -- Catch all Exceptions and react appropriately.
-#  -- Implement unimplemented classes.
-#  -- Add and allow FortuneTellers and other non-canvas classes.
-
 import tkinter
 from tkinter import font as tkinter_font
 import time
@@ -69,61 +50,14 @@ import turtle
 # All the windows that are constructed during a run share the single
 #    _master_Tk   (a tkinter.Tk object)
 # as their common root.  The first construction of a RoseWindow
-# sets this  _master_Tk to a Tkinter.Tk object.
+# sets this  _master_Tk  to a Tkinter.Tk object.
 # ----------------------------------------------------------------------
 _master_Tk = None
 
 
 # ----------------------------------------------------------------------
-# At the risk of not being Pythonic, we provide a simple type-checking
-# facility that attempts to provide meaningful error messages to
-# students when they pass arguments that are not of the expected type.
+# RoseWindow is the top-level object.  It starts with a single RoseCanvas.
 # ----------------------------------------------------------------------
-class WrongTypeException(Exception):
-    """ Not yet implemented. """
-    pass
-
-
-def check_types(pairs):
-    """ Not yet implemented fully. """
-    for pair in pairs:
-        value = pair[0]
-        expected_type = pair[1]
-        if not isinstance(value, expected_type):
-            raise WrongTypeException(pair)
-
-# ----------------------------------------------------------------------
-# Serialization facility
-# ----------------------------------------------------------------------
-
-
-def _serialize_shapes(self):
-    """Returns a list of strings representing the shapes in sorted order."""
-    # Idea: dump all the stats on all shapes, return a sorted list for easy comparison.
-    # Problem: the order in which keys appear in dictionaries is random!
-    # Solution: sort keys and manually print
-    shapes = [shape.__dict__ for shape in self.initial_canvas.shapes]
-    keys_by_shape = [sorted(shape) for shape in shapes]
-
-    for k in range(len(shapes)):
-        shapes[k]['_method_for_drawing'] = None
-        shapes[k]['shape_id_by_canvas'] = None
-
-    result = []
-    for k in range(len(keys_by_shape)):
-        shape = shapes[k]
-        result.append([])
-        for key in keys_by_shape[k]:
-            result[-1].append(str(key) + ":" + str(shape[key]))
-        result[-1] = str(result[-1])
-    return "\n".join(sorted(result))
-
-# ----------------------------------------------------------------------
-# RoseWindow is the top-level object.
-# It starts with a single RoseCanvas.
-# ----------------------------------------------------------------------
-
-
 class RoseWindow(object):
     """
     A RoseWindow is a window that pops up when constructed.
@@ -247,10 +181,10 @@ class RoseWindow(object):
 
     def render(self, seconds_to_pause=None):
         """
-        Updates all the Shapes attached to RoseCanvas objects associated with this RoseWindow, then draws all those Shapes.
+        Updates all the Shapes attached to RoseCanvas objects associated
+        with this RoseWindow, then draws all those Shapes.
         After doing so, pauses the given number of seconds.
-
-          :type  seconds_to_pause:  int
+          :type  seconds_to_pause:  float
         """
         for widget in self.widgets:
             if type(widget) == RoseCanvas:
@@ -263,7 +197,8 @@ class RoseWindow(object):
 
     def close_on_mouse_click(self):
         """
-        Displays a message at the bottom center of the window and waits for the user to click the mouse anywhere in the window.
+        Displays a message at the bottom center of the window and waits
+        for the user to click the mouse anywhere in the window.
         Then closes this RoseWindow.
         Returns an rg.Point that specifies where the user clicked the mouse.
         """
@@ -279,12 +214,16 @@ class RoseWindow(object):
                                 close_it=False,
                                 erase_it=True):
         """
-        Displays a message at the bottom center of the window and waits for the user to click the mouse, then erases the message.
+        Displays a message at the bottom center of the window
+        and waits for the user to click the mouse, then erases the message.
 
         Optional parameters let you:
           -- Display a different message
-          -- Place the message at a different place in the window (xpos and ypos are as in Text)
-          -- Close the window after the mouse is clicked (and ignore the GraphicsError that results if the user instead chooses to click the   X   in the window)
+          -- Place the message at a different place in the window
+               (xpos and ypos are as in Text)
+          -- Close the window after the mouse is clicked (and ignore
+               the GraphicsError that results if the user instead chooses
+               to click the   X   in the window)
           -- NOT erase the message when done
         """
         if self._is_closed:
@@ -314,11 +253,12 @@ class RoseWindow(object):
 
     def get_next_mouse_click(self):
         """
-        Waits for the user to click in the window.
-        Then returns the rg.Point that represents the point where the user clicked.
+        Waits for the user to click in the window. Then returns the rg.Point
+        that represents the point where the user clicked.
 
         Example:
-        If this method is called and then the user clicks near the upper-right corner of a 300 x 500 window,
+        If this method is called and then the user clicks near
+        he upper-right corner of a 300 x 500 window,
         this function would return something like rg.Point(295, 5).
         """
         self.mouse.position = None
@@ -349,11 +289,13 @@ class RoseWindow(object):
 #         _root.update()
 
     def __serialize_shapes(self):
-        """Returns a list of strings representing the shapes in sorted order."""
+        """
+        Returns a list of strings representing the shapes in sorted order.
+        """
         return _serialize_shapes(self)
 
 
-class RoseWidget():
+class RoseWidget(object):
     """
        A Widget is a thing that one can put on a Window,
        e.g. a Canvas, FortuneTeller, etc.
@@ -404,10 +346,9 @@ class RoseCanvas(RoseWidget):
 
     def render(self, seconds_to_pause=None):
         """
-        Updates all the Shapes attached to this RoseCanvas, then draws all those Shapes.
-        After doing so, pauses the given number of seconds.
-
-          :type  seconds_to_pause:  int
+        Updates all the Shapes attached to this RoseCanvas, then draws
+        all those Shapes.  After doing so, pauses the given number of seconds.
+          :type  seconds_to_pause:  float
         """
         self._update_shapes()
         self._window.update()
@@ -1678,7 +1619,8 @@ class _RoseWindowStub(RoseWindow):
         return None
 
     def continue_on_mouse_click(self,
-                                message='To continue, click anywhere in this window',
+                                message=('To continue, ' +
+                                         'click anywhere in this window'),
                                 x_position=None,
                                 y_position=None,
                                 close_it=False,
@@ -1686,7 +1628,9 @@ class _RoseWindowStub(RoseWindow):
         return None
 
     def _serialize_shapes(self):
-        """Returns a list of strings representing the shapes in sorted order."""
+        """
+        Returns a list of strings representing the shapes in sorted order.
+        """
         return _serialize_shapes(self)
 
 
@@ -1714,7 +1658,7 @@ class TurtleWindow(object):
 
     def close_on_mouse_click(self):
         message = 'To exit, click anywhere in this window'
-        self._screen._canvas.create_text(0, 280, text=message)
+        self.display_message(message, Point(0, 280))
 
         self._screen.exitonclick()
 
@@ -1728,13 +1672,20 @@ class TurtleWindow(object):
         # (something flashed) but nothing worse.  At time time
         # it is commented-out, since we need only a single TurtleWindow.
 
-        turtle.TurtleScreen._RUNNING = True
+        # turtle.TurtleScreen._RUNNING = True
+
+    def display_message(self, message, point):
+        """ Displays the given message at the given Point. """
+        self._screen._canvas.create_text(point.x, point.y, text=message)
 
     def delay(self, milliseconds=None):
         self._screen.delay(milliseconds)
 
     def tracer(self, n=None, delay=None):
         self._screen.tracer(n, delay)
+
+    def update(self):
+        self._screen.update()
 
 
 class ShapesWindow(RoseWindow):
@@ -1792,8 +1743,9 @@ class SimpleTurtle(object):
     def __init__(self, shape='classic'):
         """
         What comes in:
-          A turtle.Shape that determines how the Turtle looks.  Defaults to
-          a Bitmap of the "classic" Turtle (an arrowhead) from early Turtle Graphics.
+          A turtle.Shape that determines how the Turtle looks.
+          Defaults to a Bitmap of the "classic" Turtle (an arrowhead) from
+          early Turtle Graphics.  See above for other shapes that are allowed.
 
         Side effects: Constructs and stores in  self._turtle  the "real" Turtle
           to do all the work on behalf of this SimpleTurtle.  This (purposely)
@@ -1863,6 +1815,10 @@ class SimpleTurtle(object):
         """
         self._update_real_turtle()
         self._turtle.goto(point.x, point.y)
+
+    def set_heading(self, to_angle):
+        self._update_real_turtle()
+        self._turtle.setheading(to_angle)
 
     def draw_circle(self, radius):
         """
@@ -2020,14 +1976,14 @@ class Pen(object):
 
     Instance variables are:
       color:  The color of the Pen
-      thickness:  The thickness of the Pen 
+      thickness:  The thickness of the Pen
 
     Examples:
        thick_blue = rg.Pen('blue', 14)
        thin_red = rg.Pen('red', 1)
     """
 
-    def __init__(self, color: str, thickness: int) -> None:
+    def __init__(self, color, thickness):
         self.thickness = thickness
         self.color = color
 
@@ -2050,3 +2006,69 @@ class PaintBucket(object):
 
     def __init__(self, color):
         self.color = color
+
+
+# ----------------------------------------------------------------------
+# At the risk of not being Pythonic, we provide a simple type-checking
+# facility that attempts to provide meaningful error messages to
+# students when they pass arguments that are not of the expected type.
+# ----------------------------------------------------------------------
+class WrongTypeException(Exception):
+    """ Not yet implemented. """
+    pass
+
+
+def check_types(pairs):
+    """ Not yet implemented fully. """
+    for pair in pairs:
+        value = pair[0]
+        expected_type = pair[1]
+        if not isinstance(value, expected_type):
+            raise WrongTypeException(pair)
+
+
+# ----------------------------------------------------------------------
+# Serialization facility
+# ----------------------------------------------------------------------
+
+
+def _serialize_shapes(self):
+    """ Returns a list of strings representing the shapes in sorted order. """
+    # Idea: dump all the stats on all shapes,
+    # then return a sorted list for easy comparison.
+    # Problem: the order in which keys appear in dictionaries is random!
+    # Solution: sort keys and manually print
+    shapes = [shape.__dict__ for shape in self.initial_canvas.shapes]
+    keys_by_shape = [sorted(shape) for shape in shapes]
+
+    for k in range(len(shapes)):
+        shapes[k]['_method_for_drawing'] = None
+        shapes[k]['shape_id_by_canvas'] = None
+
+    result = []
+    for k in range(len(keys_by_shape)):
+        shape = shapes[k]
+        result.append([])
+        for key in keys_by_shape[k]:
+            result[-1].append(str(key) + ":" + str(shape[key]))
+        result[-1] = str(result[-1])
+    return "\n".join(sorted(result))
+
+# FIXME (errors):
+#  -- clone() does not really make a copy; it just makes a new one
+#     but without cloning all the attributes.
+#  -- _ShapeWithCenter claims that things like Ellipse are subclasses,
+#     but they are not at this point, I think.  In general, need to
+#     deal with overlap between _ShapeWithCenter and _RectangularShape.
+#     KEEP both of them to have some classes have corner_1 and corner_2
+#     while others have center and ...
+
+# FIXME (things that have yet to be implemented):
+#  -- Allow multiple canvasses.
+#  -- Better close_on ... ala zellegraphics.
+#  -- Keyboard.
+#  -- Better Mouse.
+#  -- Add type hints.
+#  -- Catch all Exceptions and react appropriately.
+#  -- Implement unimplemented classes.
+#  -- Add and allow FortuneTellers and other non-canvas classes.
